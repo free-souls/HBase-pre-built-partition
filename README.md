@@ -1,4 +1,4 @@
-# Intro
+# Introduce
 
 该工具用于创建hbase表并预建分区
 
