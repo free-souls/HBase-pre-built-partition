@@ -24,7 +24,7 @@ public class GenRowkeyUtilTest {
         conf.set("zookeeper.znode.parent", "/hbase");
 
         HBaseAdmin admin = new HBaseAdmin(conf);
-        String tableName = "test1";
+        String tableName = "test";
         String familyName = "cf";
         String columnName = "imageColumn";
         HTableDescriptor htd = new HTableDescriptor(tableName);
