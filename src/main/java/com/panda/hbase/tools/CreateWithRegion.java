@@ -1,12 +1,14 @@
 package com.panda.hbase.tools;
 
 import lombok.extern.log4j.Log4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
@@ -25,9 +27,9 @@ public class CreateWithRegion {
     public static final String BLOOMFILTER = "bloomFilter";
 
 
-    static Map<String, DataBlockEncoding> dataBlockEncodingTypes = new HashMap<String, DataBlockEncoding>();
-    static Map<String, Compression.Algorithm> compressionTypes = new HashMap<String, Compression.Algorithm>();
-    static Map<String, BloomType> bloomFilterTypes = new HashMap<String, BloomType>();
+    static Map<String, DataBlockEncoding> dataBlockEncodingTypes = new HashMap<>();
+    static Map<String, Compression.Algorithm> compressionTypes = new HashMap<>();
+    static Map<String, BloomType> bloomFilterTypes = new HashMap<>();
 
     static {
         dataBlockEncodingTypes.put("FAST_DIFF", DataBlockEncoding.FAST_DIFF);
@@ -51,8 +53,8 @@ public class CreateWithRegion {
 
         Admin admin = null;
         String tableName = null;
-        String columnFamilyName = null;
-        int regionReplicates = 1; // default 1
+        String columnFamilyName;
+        int regionReplicates = 1;
         try {
             Configuration conf = HBaseConfiguration.create();
             String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
@@ -64,6 +66,7 @@ public class CreateWithRegion {
             if (otherArgs.length == 4) {
                 regionReplicates = Integer.valueOf(otherArgs[3]);
             }
+
             tableName = otherArgs[0];
             columnFamilyName = otherArgs[1];
             int regionNum = Integer.valueOf(otherArgs[2]);
@@ -71,32 +74,32 @@ public class CreateWithRegion {
             String compressType = conf.get(COMPREESSTYPE);
             String dataBlockEncodingType = conf.get(DATABLOCKENCODING);
             String bloomFilterType = conf.get(BLOOMFILTER);
-            if (compressType == null || compressType.equals("")) {
+            if (StringUtils.isEmpty(compressType)) {
                 compressType = "NONE";
             }
-            if (dataBlockEncodingType == null || dataBlockEncodingType.equals("")) {
+            if (StringUtils.isEmpty(dataBlockEncodingType)) {
                 dataBlockEncodingType = "NONE";
             }
-            if (bloomFilterType == null || bloomFilterType.equals("")) {
+            if (StringUtils.isEmpty(bloomFilterType)) {
                 bloomFilterType = "NONE";
             }
 
-            org.apache.hadoop.hbase.client.Connection connection = ConnectionFactory
-                .createConnection(conf);
+            Connection connection = ConnectionFactory.createConnection(conf);
             admin = connection.getAdmin();
-            TableName tableNameObj = TableName.valueOf(tableName);
-            if (admin.tableExists(tableNameObj)) {
+            TableName hbaseTable = TableName.valueOf(tableName);
+            if (admin.tableExists(hbaseTable)) {
                 log.error("table : " + tableName + " already exist.");
                 return;
             }
 
             log.info("compressType is " + compressType +
-                " dataBlockEncodingType is " + dataBlockEncodingType +
-                " bloomFilterType is " + bloomFilterType +
-                " region replicates are " + regionReplicates);
+                    " dataBlockEncodingType is " + dataBlockEncodingType +
+                    " bloomFilterType is " + bloomFilterType +
+                    " region replicates are " + regionReplicates);
 
-            HTableDescriptor tableDesc = new HTableDescriptor(tableNameObj);
-            tableDesc.setRegionReplication(regionReplicates); // 设置region副本数，提高读可用性
+            HTableDescriptor tableDesc = new HTableDescriptor(hbaseTable);
+            // 设置region副本数，提高读可用性
+            tableDesc.setRegionReplication(regionReplicates);
 
             HColumnDescriptor columnDesc = new HColumnDescriptor(columnFamilyName);
             columnDesc.setCompactionCompressionType(compressionTypes.get(compressType));
@@ -121,9 +124,8 @@ public class CreateWithRegion {
     }
 
     private static void usage() {
-        log.info(
-            "params : -DcompressType=SNAPPY -DdataBlockEncoding=PREFIX_TREE -DbloomFilter=NONE  " +
-                " tableName columnFamilyName regionNum [replicateNum]");
+        log.info("params : -DcompressType=SNAPPY -DdataBlockEncoding=PREFIX_TREE -DbloomFilter=NONE  " +
+                        " tableName columnFamilyName regionNum [replicateNum]");
 
     }
 }

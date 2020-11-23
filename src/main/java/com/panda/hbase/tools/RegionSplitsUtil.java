@@ -8,8 +8,8 @@ import java.math.BigInteger;
 
 public class RegionSplitsUtil {
 
-    final static String MAXMD5 = "FFF";
-    final static int rowComparisonLength = MAXMD5.length();
+    final static String MAX_MD5 = "FFF";
+    final static int rowComparisonLength = MAX_MD5.length();
 
     static byte[] convertToByte(BigInteger bigInteger) {
         String bigIntegerString = bigInteger.toString(16);
